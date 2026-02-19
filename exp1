@@ -1,0 +1,91 @@
+import heapq
+
+# Goal state of the puzzle
+GOAL_STATE = [
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 0]
+]
+
+# Directions for moving the blank tile
+DIRECTIONS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+
+def manhattan_distance(state):
+    distance = 0
+    for i in range(3):
+        for j in range(3):
+            if state[i][j] != 0:
+                x, y = divmod(state[i][j] - 1, 3)
+                distance += abs(i - x) + abs(j - y)
+    return distance
+
+def find_blank(state):
+    for i in range(3):
+        for j in range(3):
+            if state[i][j] == 0:
+                return i, j
+
+def generate_neighbors(state):
+    neighbors = []
+    x, y = find_blank(state)
+
+    for dx, dy in DIRECTIONS:
+        nx, ny = x + dx, y + dy
+        if 0 <= nx < 3 and 0 <= ny < 3:
+            new_state = [row[:] for row in state]
+            new_state[x][y], new_state[nx][ny] = new_state[nx][ny], new_state[x][y]
+            neighbors.append(new_state)
+
+    return neighbors
+
+def state_to_tuple(state):
+    return tuple(tuple(row) for row in state)
+
+def a_star(start):
+    priority_queue = []
+    heapq.heappush(priority_queue, (0, start))
+    visited = set()
+    parent = {}
+
+    parent[state_to_tuple(start)] = None
+
+    while priority_queue:
+        cost, current = heapq.heappop(priority_queue)
+
+        if current == GOAL_STATE:
+            print("Solution Found!")
+            print_solution(parent, current)
+            return
+
+        visited.add(state_to_tuple(current))
+
+        for neighbor in generate_neighbors(current):
+            if state_to_tuple(neighbor) not in visited:
+                g = cost + 1
+                h = manhattan_distance(neighbor)
+                f = g + h
+                heapq.heappush(priority_queue, (f, neighbor))
+                parent[state_to_tuple(neighbor)] = current
+
+    print("No solution exists")
+
+def print_solution(parent, state):
+    path = []
+    while state is not None:
+        path.append(state)
+        state = parent[state_to_tuple(state)]
+
+    path.reverse()
+    for step in path:
+        for row in step:
+            print(row)
+        print()
+
+# Initial state
+initial_state = [
+    [1, 2, 3],
+    [4, 0, 6],
+    [7, 5, 8]
+]
+
+a_star(initial_state)
